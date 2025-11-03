@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Minimal Paytm Test</title>
+</head>
+
+<body>
+    <h2>Minimal Paytm Test Form</h2>
+    <p>This form uses the absolute minimum parameters required by Paytm staging.</p>
+
+    <form id="paytmForm" method="post" action="https://securegw-stage.paytm.in/order/process">
+        <input type="hidden" name="MID" value="Samskr19805871747806">
+        <input type="hidden" name="WEBSITE" value="WEBSTAGING">
+        <input type="hidden" name="INDUSTRY_TYPE_ID" value="Retail">
+        <input type="hidden" name="CHANNEL_ID" value="WEB">
+        <input type="hidden" name="ORDER_ID" value="MINIMAL_TEST_001">
+        <input type="hidden" name="CUST_ID" value="CUST001">
+        <input type="hidden" name="TXN_AMOUNT" value="1.00">
+        <input type="hidden" name="CALLBACK_URL"
+            value="https://unprevented-maryland-commensurately.ngrok-free.dev/api/v1/payments/paytm_callback">
+        <input type="hidden" name="CHECKSUMHASH" id="checksum" value="">
+
+        <button type="button" onclick="generateAndSubmit()">Generate Checksum & Test Payment</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        async function generateAndSubmit() {
+            try {
+                // Get checksum from backend
+                const response = await fetch('/api/v1/payments/debug/verify_checksum', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "MID": "Samskr19805871747806",
+                        "WEBSITE": "WEBSTAGING",
+                        "INDUSTRY_TYPE_ID": "Retail",
+                        "CHANNEL_ID": "WEB",
+                        "ORDER_ID": "MINIMAL_TEST_001",
+                        "CUST_ID": "CUST001",
+                        "TXN_AMOUNT": "1.00",
+                        "CALLBACK_URL": "https://unprevented-maryland-commensurately.ngrok-free.dev/api/v1/payments/paytm_callback"
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('checksum').value = data.generated_checksum;
+                    document.getElementById('result').innerHTML =
+                        '<p style="color: green;">✅ Checksum generated: ' + data.generated_checksum.substring(0, 20) + '...</p>' +
+                        '<p>Submitting to Paytm in 2 seconds...</p>';
+
+                    setTimeout(() => {
+                        document.getElementById('paytmForm').submit();
+                    }, 2000);
+                } else {
+                    document.getElementById('result').innerHTML =
+                        '<p style="color: red;">❌ Error: ' + data.error + '</p>';
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML =
+                    '<p style="color: red;">❌ Network Error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+
+</html>
