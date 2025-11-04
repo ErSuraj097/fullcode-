@@ -155,3 +155,36 @@ def update_invoice(current_user, invoice_id):
         db.session.rollback()
         print(f"Error updating invoice: {e}")
         return jsonify({"error": "Failed to update invoice"}), 500
+
+@invoice_bp.route('/invoices/<invoice_id>/download')
+@cross_origin()
+@token_required
+def download_invoice(current_user, invoice_id):
+    """Download invoice as PDF"""
+    try:
+        invoice = Invoice.query.filter_by(id=invoice_id, user_id=current_user['id']).first()
+
+        if not invoice:
+            return jsonify({"error": "Invoice not found"}), 404
+
+        # For now, return invoice data as JSON (in production, generate PDF)
+        # You can integrate with a PDF generation library like reportlab or weasyprint
+        invoice_data = invoice.to_dict()
+
+        # Add project information if available
+        if invoice.subscription_id:
+            from app.models_payment import Subscription
+            subscription = Subscription.query.filter_by(id=invoice.subscription_id).first()
+            if subscription and subscription.project:
+                invoice_data['project_name'] = subscription.project.name
+                invoice_data['project_type'] = subscription.project.type
+
+        return jsonify({
+            "success": True,
+            "invoice": invoice_data,
+            "download_url": f"/api/v1/invoices/{invoice_id}/pdf"  # Placeholder for PDF download
+        })
+
+    except Exception as e:
+        print(f"Error downloading invoice: {e}")
+        return jsonify({"error": "Failed to download invoice"}), 500

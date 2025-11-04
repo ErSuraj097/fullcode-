@@ -48,6 +48,7 @@ class Project(db.Model):
     training_status = db.Column(db.String(20), default='not_trained')
     model_type = db.Column(db.String(20), default='basic')  # basic, medium, advanced
     accuracy = db.Column(db.Float, default=0.0)
+    payment_status = db.Column(db.String(20), default='unpaid')  # unpaid, paid, failed
     config = db.Column(db.JSON)  # Store configuration as JSON
     
     def to_dict(self):
@@ -63,6 +64,7 @@ class Project(db.Model):
             'training_status': self.training_status,
             'model_type': self.model_type,
             'accuracy': self.accuracy,
+            'payment_status': self.payment_status,
             'config': self.config
         }
 

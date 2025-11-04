@@ -2,18 +2,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  Plus, 
-  Bot, 
-  Brain, 
-  TrendingUp, 
-  Activity, 
-  Users, 
+import {
+  Plus,
+  Bot,
+  Brain,
+  TrendingUp,
+  Activity,
+  Users,
   MessageCircle,
   Calendar,
   Zap,
   ArrowRight,
   BarChart3,
+  XCircle,
 } from 'lucide-react';
 import { projectsApi, systemApi, feedbackApi } from '../../api/services/api';
 import { useAuth } from '../../providers/AuthProvider';
@@ -26,10 +27,15 @@ const DashboardPage: React.FC = () => {
   const { user } = useAuth();
 
   // Fetch projects
-  const { data: projects = [], isLoading: projectsLoading } = useQuery({
+  const { data: allProjects = [], isLoading: projectsLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: projectsApi.getAll,
   });
+
+  // Categorize projects by payment status
+  const paidProjects = allProjects.filter(project => project.payment_status === 'paid');
+  const unpaidProjects = allProjects.filter(project => project.payment_status === 'unpaid');
+  const failedProjects = allProjects.filter(project => project.payment_status === 'failed');
 
   // Fetch system health
   const { data: systemHealth } = useQuery({
@@ -46,13 +52,16 @@ const DashboardPage: React.FC = () => {
 
   // Calculate statistics
   const stats = React.useMemo(() => {
-    const trainedProjects = projects.filter(p => p.training_status === 'trained');
+    const trainedProjects = paidProjects.filter(p => p.training_status === 'trained');
     const averageAccuracy = trainedProjects.length > 0
       ? trainedProjects.reduce((sum, p) => sum + (p.accuracy || 0), 0) / trainedProjects.length
       : 0;
 
     return {
-      totalProjects: projects.length,
+      totalProjects: allProjects.length,
+      paidProjects: paidProjects.length,
+      unpaidProjects: unpaidProjects.length,
+      failedProjects: failedProjects.length,
       trainedModels: trainedProjects.length,
       averageAccuracy: Math.round(averageAccuracy * 100),
       systemHealth: systemHealth?.status || 'unknown',
@@ -63,7 +72,7 @@ const DashboardPage: React.FC = () => {
       },
       feedbackStatsLoading,
     };
-  }, [projects, systemHealth, feedbackStats, feedbackStatsLoading]);
+  }, [allProjects, paidProjects, unpaidProjects, failedProjects, systemHealth, feedbackStats, feedbackStatsLoading]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -127,6 +136,38 @@ const DashboardPage: React.FC = () => {
 
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center">
+            <div className="p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+              <Calendar className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Pending Projects
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {stats.unpaidProjects}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center">
+            <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg">
+              <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Failed Projects
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {stats.failedProjects}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center">
             <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
               <Brain className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
@@ -175,105 +216,282 @@ const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Recent Projects */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t('dashboard.recentProjects')}
-            </h2>
-            <Link 
-              to="/app/projects" 
-              className="text-[#e1802be0] dark:text-[#e1802be0] hover:text-[#e1802be0] text-sm font-medium flex items-center"
-            >
-              {t('View All')}
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Link>
-          </div>
-        </div>
-
-        {projectsLoading ? (
-          <SectionLoader />
-        ) : projects.length === 0 ? (
-          <div className="p-12 text-center">
-            <Bot className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-              {t('dashboard.noProjects')}
-            </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {t('dashboard.noProjectsDesc')}
-            </p>
-            <div className="mt-6">
+      {/* Projects by Payment Status */}
+      <div className="space-y-6">
+        {/* Pending Projects */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg mr-3">
+                  <Calendar className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Pending Projects ({unpaidProjects.length})
+                </h2>
+              </div>
               <Link
-                to="/app/projects/new"
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#e1802be0] hover:bg-[#e1802be0]/50 dark:bg-[#e1802be0] dark:hover:bg-[#e1802be0]/50"
+                to="/app/projects"
+                className="text-[#e1802be0] dark:text-[#e1802be0] hover:text-[#e1802be0] text-sm font-medium flex items-center"
               >
-                <Plus className="h-5 w-5 mr-2" />
-                {t('dashboard.createFirst')}
+                {t('View All')}
+                <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
           </div>
-        ) : (
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {projects.slice(0, 5).map((project) => (
-              <div key={project.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                    <Link
-                      to={`/app/projects/${project.id}/${project.model_type}-project`}
-                      className="hover:text-blue-600 dark:hover:text-blue-400"
-                    >
-                      {project.name}
-                    </Link>
-                      </h3>
-                      {/* <span className={cn(
-                        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                        getStatusColor(project.training_status)
-                      )}>
-                        {project.training_status}
-                      </span> */}
-                      {project.model_type && (
-                        <span className={cn(
-                          'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                          getModelTypeColor(project.model_type)
-                        )}>
-                          {project.model_type}
+
+          {projectsLoading ? (
+            <SectionLoader />
+          ) : unpaidProjects.length === 0 ? (
+            <div className="p-12 text-center">
+              <Calendar className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                No Pending Projects
+              </h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                All your projects are either paid or failed.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {unpaidProjects.slice(0, 3).map((project) => (
+                <div key={project.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                          <Link
+                            to={`/app/projects/${project.id}/payment`}
+                            state={{ projectData: project }}
+                            className="hover:text-blue-600 dark:hover:text-blue-400"
+                          >
+                            {project.name}
+                          </Link>
+                        </h3>
+                        {project.model_type && (
+                          <span className={cn(
+                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                            getModelTypeColor(project.model_type)
+                          )}>
+                            {project.model_type}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+                          Pending Payment
                         </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                      {project.description || t('common.noDescription')}
-                    </p>
-                    <div className="flex items-center text-xs text-gray-400 dark:text-gray-500 space-x-4">
-                      <span className="flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {new Date(project.created_at).toLocaleDateString()}
-                      </span>
-                      {project.accuracy && (
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                        {project.description || t('common.noDescription')}
+                      </p>
+                      <div className="flex items-center text-xs text-gray-400 dark:text-gray-500 space-x-4">
                         <span className="flex items-center">
-                          <Zap className="h-3 w-3 mr-1" />
-                          {Math.round(project.accuracy * 100)}% accuracy
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {new Date(project.created_at).toLocaleDateString()}
                         </span>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2 ml-4">
-                   
-                    <Link
-                      to={`/app/projects/${project.id}/${project.model_type}-project`}
-                      className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-[#e1802be0] hover:bg-[#e1802be0]
-                       dark:bg-[#e1802be0] dark:hover:bg-#e1802be0-600"
-                    >
-                      {t('common.manage')}
-                    </Link>
+                    <div className="flex items-center space-x-2 ml-4">
+                      <Link
+                        to={`/app/projects/${project.id}/payment`}
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-[#e1802be0] hover:bg-[#e1802be0] dark:bg-[#e1802be0] dark:hover:bg-[#e1802be0]/80"
+                      >
+                        Pay Now
+                      </Link>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Failed Projects */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg mr-3">
+                  <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Failed Projects ({failedProjects.length})
+                </h2>
               </div>
-            ))}
+              <Link
+                to="/app/projects"
+                className="text-[#e1802be0] dark:text-[#e1802be0] hover:text-[#e1802be0] text-sm font-medium flex items-center"
+              >
+                {t('View All')}
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Link>
+            </div>
           </div>
-        )}
+
+          {projectsLoading ? (
+            <SectionLoader />
+          ) : failedProjects.length === 0 ? (
+            <div className="p-12 text-center">
+              <XCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                No Failed Projects
+              </h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                All your projects are either paid or pending.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {failedProjects.slice(0, 3).map((project) => (
+                <div key={project.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                          <Link
+                            to={`/app/projects/${project.id}/payment`}
+                            state={{ projectData: project }}
+                            className="hover:text-blue-600 dark:hover:text-blue-400"
+                          >
+                            {project.name}
+                          </Link>
+                        </h3>
+                        {project.model_type && (
+                          <span className={cn(
+                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                            getModelTypeColor(project.model_type)
+                          )}>
+                            {project.model_type}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">
+                          Payment Failed
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                        {project.description || t('common.noDescription')}
+                      </p>
+                      <div className="flex items-center text-xs text-gray-400 dark:text-gray-500 space-x-4">
+                        <span className="flex items-center">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {new Date(project.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 ml-4">
+                      <Link
+                        to={`/app/projects/${project.id}/payment`}
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-[#e1802be0] hover:bg-[#e1802be0] dark:bg-[#e1802be0] dark:hover:bg-[#e1802be0]/80"
+                      >
+                        Retry Payment
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Paid Projects */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg mr-3">
+                  <Bot className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Paid Projects ({paidProjects.length})
+                </h2>
+              </div>
+              <Link
+                to="/app/projects"
+                className="text-[#e1802be0] dark:text-[#e1802be0] hover:text-[#e1802be0] text-sm font-medium flex items-center"
+              >
+                {t('View All')}
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Link>
+            </div>
+          </div>
+
+          {projectsLoading ? (
+            <SectionLoader />
+          ) : paidProjects.length === 0 ? (
+            <div className="p-12 text-center">
+              <Bot className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                No Paid Projects
+              </h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Complete payment for your projects to start using them.
+              </p>
+              <div className="mt-6">
+                <Link
+                  to="/app/projects/new"
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#e1802be0] hover:bg-[#e1802be0]/50 dark:bg-[#e1802be0] dark:hover:bg-[#e1802be0]/50"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  {t('dashboard.createFirst')}
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {paidProjects.slice(0, 3).map((project) => (
+                <div key={project.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                          <Link
+                            to={`/app/projects/${project.id}/${project.model_type}-project`}
+                            className="hover:text-blue-600 dark:hover:text-blue-400"
+                          >
+                            {project.name}
+                          </Link>
+                        </h3>
+                        {project.model_type && (
+                          <span className={cn(
+                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                            getModelTypeColor(project.model_type)
+                          )}>
+                            {project.model_type}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                          Paid
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                        {project.description || t('common.noDescription')}
+                      </p>
+                      <div className="flex items-center text-xs text-gray-400 dark:text-gray-500 space-x-4">
+                        <span className="flex items-center">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {new Date(project.created_at).toLocaleDateString()}
+                        </span>
+                        {project.accuracy && (
+                          <span className="flex items-center">
+                            <Zap className="h-3 w-3 mr-1" />
+                            {Math.round(project.accuracy * 100)}% accuracy
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 ml-4">
+                      <Link
+                        to={`/app/projects/${project.id}/${project.model_type}-project`}
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-[#e1802be0] hover:bg-[#e1802be0] dark:bg-[#e1802be0] dark:hover:bg-[#e1802be0]/80"
+                      >
+                        {t('common.manage')}
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Quick Actions */}

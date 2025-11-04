@@ -19,6 +19,7 @@ export interface Project {
   training_status: 'untrained' | 'training' | 'trained' | 'error';
   model_type?: 'basic' | 'advanced';
   accuracy?: number;
+  payment_status: 'unpaid' | 'paid' | 'failed';
   config: ChatbotConfig;
 }
 

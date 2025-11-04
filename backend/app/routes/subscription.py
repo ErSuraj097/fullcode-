@@ -5,6 +5,7 @@ from flask_cors import cross_origin
 from app.utils.security import token_required
 from app.models import db
 from app.models_payment import Subscription
+from app.services.subscription_service import SubscriptionService
 
 subscription_bp = Blueprint('subscription', __name__)
 
@@ -93,23 +94,14 @@ def get_subscription(current_user, subscription_id):
 @cross_origin()
 @token_required
 def get_user_subscriptions(current_user):
-    """Get all subscriptions for the current user"""
+    """Get all subscriptions for the current user with comprehensive project data"""
     try:
-        subscriptions = Subscription.query.filter_by(user_id=current_user['id']).order_by(Subscription.created_at.desc()).all()
-
-        # Include project information in the response
-        subscriptions_with_projects = []
-        for subscription in subscriptions:
-            sub_dict = subscription.to_dict()
-            # Add project name if available
-            if subscription.project:
-                sub_dict['project_name'] = subscription.project.name
-                sub_dict['project_type'] = subscription.project.type
-            subscriptions_with_projects.append(sub_dict)
+        # Get comprehensive subscription data including orders, invoices, payments
+        subscription_data = SubscriptionService.get_project_subscription_data(current_user['id'])
 
         return jsonify({
             "success": True,
-            "subscriptions": subscriptions_with_projects
+            "subscriptions": subscription_data
         })
 
     except Exception as e:

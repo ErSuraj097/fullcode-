@@ -87,12 +87,12 @@ const PaymentPage: React.FC = () => {
         throw new Error('Session expired');
       }
 
-      const getAmount = (modelType: string) => {
+  const getAmount = (modelType: string) => {
         switch (modelType) {
-          case 'basic': return 9.99;
-          case 'medium': return 19.99;
-          case 'advanced': return 39.99;
-          default: return 9.99;
+          case 'basic': return 999;
+          case 'medium': return 1999;
+          case 'advanced': return 3999;
+          default: return 999;
         }
       };
 
@@ -185,17 +185,17 @@ const PaymentPage: React.FC = () => {
   const getModelPrice = (modelType: string, method: PaymentMethod = 'card') => {
     if (method === 'paytm') {
       switch (modelType) {
-        case 'basic': return '₹799';
-        case 'medium': return '₹1599';
-        case 'advanced': return '₹3199';
-        default: return '₹799';
+        case 'basic': return '₹999';
+        case 'medium': return '₹1999';
+        case 'advanced': return '₹3999';
+        default: return '₹999';
       }
     } else {
       switch (modelType) {
-        case 'basic': return '$9.99';
-        case 'medium': return '$19.99';
-        case 'advanced': return '$39.99';
-        default: return '$9.99';
+        case 'basic': return '₹999';
+        case 'medium': return '₹1999';
+        case 'advanced': return '₹3999';
+        default: return '₹999';
       }
     }
   };
@@ -230,9 +230,7 @@ const PaymentPage: React.FC = () => {
         {/* Header */}
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => navigate(`/app/projects/${projectId}/model-selection`, {
-              state: { projectData }
-            })}
+            onClick={() => navigate('/app/dashboard')}
             className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />

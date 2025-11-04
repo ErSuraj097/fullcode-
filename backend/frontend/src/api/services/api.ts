@@ -572,6 +572,18 @@ class ApiService {
     const response = await this.client.post(`/api/v1/orders/${orderId}/cancel`);
     return response.data;
   }
+
+  // Paid Projects APIs
+  async getPaidProjects(): Promise<any[]> {
+    const response = await this.client.get('/api/v1/projects/paid');
+    return response.data;
+  }
+
+  // Invoice Download API
+  async downloadInvoice(invoiceId: string): Promise<any> {
+    const response = await this.client.get(`/api/v1/invoices/${invoiceId}/download`);
+    return response.data;
+  }
 }
 
 // Create and export singleton instance
@@ -689,6 +701,7 @@ export const paymentApi = {
   getUserInvoices: () => apiService.getUserInvoices(),
   payInvoice: (invoiceId: string) => apiService.payInvoice(invoiceId),
   updateInvoice: (invoiceId: string, data: any) => apiService.updateInvoice(invoiceId, data),
+  downloadInvoice: (invoiceId: string) => apiService.downloadInvoice(invoiceId),
 
   // Order endpoints
   createOrder: (data: any) => apiService.createOrder(data),
@@ -696,6 +709,9 @@ export const paymentApi = {
   getUserOrders: () => apiService.getUserOrders(),
   updateOrderStatus: (orderId: string, data: any) => apiService.updateOrderStatus(orderId, data),
   cancelOrder: (orderId: string) => apiService.cancelOrder(orderId),
+
+  // Paid Projects endpoints
+  getPaidProjects: () => apiService.getPaidProjects(),
 };
 
 export default apiService;

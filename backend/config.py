@@ -95,6 +95,16 @@ PAYTM_CALLBACK_URL = os.getenv('PAYTM_CALLBACK_URL', 'https://yourdomain.com/api
 # Frontend URL for Paytm redirects
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://yourdomain.com')
 
+# Subscription Pricing (INR per year)
+SUBSCRIPTION_PRICING = {
+    'basic': 999,
+    'medium': 1999,
+    'advanced': 3999
+}
+
+# Subscription Duration (in years)
+SUBSCRIPTION_DURATION_YEARS = 1
+
 # Flask Configuration
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'  # Production default: False
 HOST = os.getenv('HOST', '0.0.0.0')

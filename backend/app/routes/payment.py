@@ -7,6 +7,7 @@ from app.utils.security import token_required
 from app.utils.email_service import EmailService
 from app.models import db, User
 from app.models_payment import Payment
+from app.services.subscription_service import SubscriptionService
 import paytmchecksum
 from config import PAYTM_MID, PAYTM_KEY, PAYTM_ENVIRONMENT, PAYTM_WEBSITE, PAYTM_CALLBACK_URL, FRONTEND_URL, SMTP_SERVER, SMTP_PORT, EMAIL_USER
 
@@ -67,7 +68,7 @@ def send_payment_notification(payment, user=None):
         traceback.print_exc()
         return False
 
-@payment_bp.route('/payments', methods=['POST'])
+@payment_bp.route('', methods=['POST'])
 @cross_origin()
 @token_required
 def create_payment(current_user):
@@ -390,12 +391,23 @@ def paytm_callback():
             payment.status = 'completed'
             payment.transaction_id = txn_id or payment.transaction_id
             print(f"Payment completed successfully for order {order_id}")
+
+            # Update related subscription, invoice, and order records
+            SubscriptionService.update_records_on_payment_success(payment.id)
+
         elif txn_status == "TXN_FAILURE":
             payment.status = 'failed'
             print(f"Payment failed for order {order_id}")
+
+            # Update related subscription, invoice, and order records
+            SubscriptionService.update_records_on_payment_failure(payment.id)
+
         else:
             payment.status = 'pending'
             print(f"Payment status unclear for order {order_id}: {txn_status}")
+
+            # Update related subscription, invoice, and order records
+            SubscriptionService.update_records_on_payment_pending(payment.id)
 
         payment.updated_at = datetime.utcnow()
         db.session.commit()
