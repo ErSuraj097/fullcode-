@@ -419,7 +419,7 @@ const SubscriptionPage: React.FC = () => {
                                                     <span className="text-gray-600 dark:text-gray-400">Payment Status:</span>
                                                     <span className={cn(
                                                         "font-medium ml-1 capitalize",
-                                                        project.payment_status === 'paid' ? 'text-green-600' :
+                                                        project.payment_status === 'success' ? 'text-green-600' :
                                                         project.payment_status === 'pending' ? 'text-yellow-600' :
                                                         project.payment_status === 'failed' ? 'text-red-600' :
                                                         'text-gray-600'

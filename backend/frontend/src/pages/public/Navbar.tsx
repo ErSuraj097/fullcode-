@@ -25,9 +25,12 @@ const Navbar = () => {
   const navItems = [
     { name: 'Home', href: '#', icon: null },
     { name: 'Features', href: '#features', icon: <Sparkles className="h-4 w-4" /> },
+     { name: 'Pricing', href: '#pricing', icon: null },
     { name: 'Use Cases', href: '#use-cases', icon: null },
     { name: 'Reviews', href: '#testimonials', icon: null },
+   
     { name: 'FAQ', href: '#faq', icon: null },
+    
     { name: 'Contact', href: '#contact', icon: null },
   ];
 

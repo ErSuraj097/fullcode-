@@ -52,9 +52,13 @@ const LandingPage = () => {
         <Pricing />
       </section>
       {/* contact */}
-      <Contact />
+
+      <section id="contact" className="py-20 bg-background">
+        <Contact />
+      </section>
+      {/* <Contact /> */}
       {/* CTA Section */}
-      {/* <Cta /> */}
+      <Cta />
       {/* Footer */}
       <Footer />
       {/* <Demo/> */}

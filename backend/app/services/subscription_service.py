@@ -67,7 +67,7 @@ class SubscriptionService:
                 total_amount=amount,
                 currency='INR',
                 status='pending',
-                payment_status='unpaid'
+                payment_status='pending'
             )
 
             # Create invoice
@@ -141,7 +141,7 @@ class SubscriptionService:
 
             if order:
                 order.status = 'completed'
-                order.payment_status = 'paid'
+                order.payment_status = 'success'
                 order.updated_at = datetime.utcnow()
 
             # Find related invoice
@@ -158,7 +158,7 @@ class SubscriptionService:
             # Update project payment status
             project = Project.query.get(payment.project_id)
             if project:
-                project.payment_status = 'paid'
+                project.payment_status = 'success'
                 project.updated_at = datetime.utcnow()
 
             db.session.commit()
@@ -202,7 +202,7 @@ class SubscriptionService:
 
             if order:
                 order.status = 'cancelled'
-                order.payment_status = 'unpaid'
+                order.payment_status = 'failed'
                 order.updated_at = datetime.utcnow()
 
             # Find related invoice
@@ -262,7 +262,7 @@ class SubscriptionService:
 
             if order:
                 order.status = 'pending'
-                order.payment_status = 'unpaid'
+                order.payment_status = 'pending'
                 order.updated_at = datetime.utcnow()
 
             # Find related invoice

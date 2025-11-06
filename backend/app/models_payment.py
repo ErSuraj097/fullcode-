@@ -15,7 +15,7 @@ class Payment(db.Model):
     transaction_id = db.Column(db.String(100), unique=True, nullable=False)
     amount = db.Column(db.Float, nullable=False)
     currency = db.Column(db.String(3), default='USD')
-    status = db.Column(db.String(20), default='completed')  # pending, completed, failed, refunded
+    status = db.Column(db.String(20), default='pending')  # pending, success, failed, refunded
     payment_method = db.Column(db.String(50), default='card')  # card, paypal, etc.
 
     # Billing Address
@@ -152,7 +152,7 @@ class Order(db.Model):
     total_amount = db.Column(db.Float, nullable=False)
     currency = db.Column(db.String(3), default='USD')
     status = db.Column(db.String(20), default='pending')  # pending, processing, completed, cancelled
-    payment_status = db.Column(db.String(20), default='unpaid')  # unpaid, paid, refunded
+    payment_status = db.Column(db.String(20), default='pending')  # pending, success, failed, refunded
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

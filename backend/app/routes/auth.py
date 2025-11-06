@@ -17,7 +17,19 @@ from config import OTP_FILE, SMTP_PORT, SMTP_SERVER, EMAIL_PASS,EMAIL_USER
 from email.utils import formataddr
 auth_bp = Blueprint('auth', __name__)    
 
+import html
 
+def test_sdk(data):
+    data = data.replace("'", "")
+    data = data.replace(",", "")
+    data = data.replace("=", "")
+    data = data.replace(";", "")
+    data = data.replace("--", "")
+    data = data.replace("+", "")
+    data = data.strip()
+    data = data.replace("\\", "") 
+    data = html.escape(data)
+    return data
 
 
 
@@ -63,7 +75,7 @@ def register():
         hashed_password = hash_password(data['password'])
         new_user = DatabaseService.create_user(
             name=data['name'],
-            email=data['email'],
+            email=test_sdk(data['email']),
             password=hashed_password,
             role="user"
         )
@@ -182,7 +194,11 @@ def login():
         if not data or not all(k in data for k in ('email', 'password')):
             return jsonify({"error": "Missing email or password"}), 400
         
-        user_obj = DatabaseService.get_user_by_email(data['email'])
+        email = test_sdk(data['email'])
+        # password = data['password'].strip()
+        
+        # user_obj = DatabaseService.get_user_by_email(data['email'])
+        user_obj = DatabaseService.get_user_by_email(email)
         
         # Check if user doesn't exist
         if not user_obj:

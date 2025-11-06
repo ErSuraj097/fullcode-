@@ -8,10 +8,6 @@ from typing import List
 # Load environment variables from .env file if it exists
 load_dotenv()
 
-
-
-
-
 # Set up logging
 import logging
 logging.basicConfig(
@@ -38,8 +34,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24 hours
 # MySQL Database Configuration
 MYSQL_HOST = "localhost"
 MYSQL_USER = "root"
-MYSQL_PASSWORD = ""
-MYSQL_DATABASE = "sambhasini"
+MYSQL_PASSWORD = "" # Update with your MySQL root password. Jethat@1259!@#$%^&*()
+MYSQL_DATABASE = "sambhasini_1"
 MYSQL_PORT = 3306
 
 

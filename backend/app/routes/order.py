@@ -35,7 +35,7 @@ def create_order(current_user):
             total_amount=data['total_amount'],
             currency=data.get('currency', 'USD'),
             status=data.get('status', 'pending'),
-            payment_status=data.get('payment_status', 'unpaid')
+            payment_status=data.get('payment_status', 'pending')
         )
 
         db.session.add(order)

@@ -226,7 +226,7 @@ def get_paid_projects(current_user):
         # Get paid projects
         paid_projects = Project.query.filter_by(
             user_id=current_user['id'],
-            payment_status='paid'
+            payment_status='success'
         ).order_by(Project.created_at.desc()).all()
 
         paid_projects_data = []
@@ -252,7 +252,7 @@ def get_paid_projects(current_user):
                 payment = Payment.query.filter_by(
                     project_id=project.id,
                     user_id=current_user['id'],
-                    status='completed'
+                    status='success'
                 ).first()
                 if payment:
                     order = Order.query.filter_by(
@@ -297,5 +297,85 @@ def get_paid_projects(current_user):
     except Exception as e:
         logger.error(f"Error getting paid projects: {e}")
         return jsonify({"success": False, "error": "Failed to retrieve paid projects"}), 500
+
+@project_bp.route('/projects/pending-failed')
+@cross_origin()
+@token_required
+def get_pending_failed_projects(current_user):
+    """Get all pending and failed projects for the current user with related order, subscription, and invoice data"""
+    try:
+        # Get pending and failed projects
+        pending_failed_projects = Project.query.filter(
+            Project.user_id == current_user['id'],
+            Project.payment_status.in_(['pending', 'failed'])
+        ).order_by(Project.created_at.desc()).all()
+
+        pending_failed_projects_data = []
+        for project in pending_failed_projects:
+            project_data = project.to_dict()
+
+            # Get subscription for this project
+            subscription = Subscription.query.filter_by(
+                project_id=project.id,
+                user_id=current_user['id']
+            ).first()
+
+            # Get order for this project (through subscription or payment)
+            order = None
+            if subscription and subscription.id:
+                order = Order.query.filter_by(
+                    subscription_id=subscription.id,
+                    user_id=current_user['id']
+                ).first()
+
+            # If no order through subscription, try to find through payment
+            if not order:
+                payment = Payment.query.filter_by(
+                    project_id=project.id,
+                    user_id=current_user['id']
+                ).first()
+                if payment:
+                    order = Order.query.filter_by(
+                        user_id=current_user['id']
+                    ).order_by(Order.created_at.desc()).first()  # Get latest order as fallback
+
+            # Get invoice for this project
+            invoice = None
+            if subscription and subscription.id:
+                invoice = Invoice.query.filter_by(
+                    subscription_id=subscription.id,
+                    user_id=current_user['id']
+                ).first()
+            elif order and order.id:
+                invoice = Invoice.query.filter_by(
+                    order_id=order.id,
+                    user_id=current_user['id']
+                ).first()
+
+            # Calculate project duration
+            duration = None
+            if subscription and subscription.start_date and subscription.end_date:
+                start_date = subscription.start_date
+                end_date = subscription.end_date
+                duration_days = (end_date - start_date).days
+                duration = f"{duration_days} days"
+
+            # Add related data to project
+            project_data['order_id'] = order.order_number if order else None
+            project_data['subscription'] = subscription.to_dict() if subscription else None
+            project_data['invoice'] = invoice.to_dict() if invoice else None
+            project_data['duration'] = duration
+
+            pending_failed_projects_data.append(project_data)
+
+        logger.info(f"Retrieved {len(pending_failed_projects_data)} pending/failed projects for user {current_user['id']}")
+        return jsonify({
+            'success': True,
+            'pending_failed_projects': pending_failed_projects_data
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting pending/failed projects: {e}")
+        return jsonify({"success": False, "error": "Failed to retrieve pending/failed projects"}), 500
 
 

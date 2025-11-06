@@ -80,7 +80,7 @@ def create_app():
     app.register_blueprint(model_chat_bp, url_prefix='/api/v1')
 
     # Payment routes
-    app.register_blueprint(payment_bp, url_prefix='/api/v1/payments')
+    app.register_blueprint(payment_bp, url_prefix='/api/v1')
     app.register_blueprint(subscription_bp, url_prefix='/api/v1')
     app.register_blueprint(invoice_bp, url_prefix='/api/v1')
     app.register_blueprint(order_bp, url_prefix='/api/v1')

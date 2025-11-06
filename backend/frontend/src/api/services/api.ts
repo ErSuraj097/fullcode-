@@ -24,7 +24,7 @@ import type {
 
 // API Configuration
 // const apiPort = import.meta.env.VITE_API_PORT || '8000';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://sambhasini.jethat.in/' || "http://127.0.0.1:8000/";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/';
 
 
 // Main API Service Class 
@@ -496,7 +496,7 @@ class ApiService {
     return response.data;
   }
 
-  async getUserSubscriptions(): Promise<any[]> {
+  async getUserSubscriptions(): Promise<{success: boolean, subscriptions: any[]}> {
     const response = await this.client.get('/api/v1/subscriptions');
     return response.data;
   }

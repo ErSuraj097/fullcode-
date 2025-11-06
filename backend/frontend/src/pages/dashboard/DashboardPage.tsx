@@ -33,8 +33,8 @@ const DashboardPage: React.FC = () => {
   });
 
   // Categorize projects by payment status
-  const paidProjects = allProjects.filter(project => project.payment_status === 'paid');
-  const unpaidProjects = allProjects.filter(project => project.payment_status === 'unpaid');
+  const paidProjects = allProjects.filter(project => project.payment_status === 'success');
+  const unpaidProjects = allProjects.filter(project => project.payment_status === 'pending');
   const failedProjects = allProjects.filter(project => project.payment_status === 'failed');
 
   // Fetch system health

@@ -58,7 +58,7 @@ const PaymentPage: React.FC = () => {
   });
 
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('paytm');
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [paymentUrl] = useState('');
   const [currentOrderId] = useState('');
@@ -96,44 +96,13 @@ const PaymentPage: React.FC = () => {
         }
       };
 
-      if (paymentMethod === 'paytm') {
-        // Paytm payment is now handled by the PaytmPaymentForm component
-        // This should not be reached as the form submission is handled separately
-        throw new Error('Paytm payment should be handled by the PaytmPaymentForm component');
-      } else {
-        // Card payment flow
-        return await paymentApi.createPayment({
-          project_id: projectData.id,
-          amount: getAmount(projectData.model_type),
-          billing_address: {
-            street: data.address.street,
-            city: data.address.city,
-            state: data.address.state,
-            zipCode: data.address.zipCode,
-            country: data.address.country
-          },
-          card_details: {
-            cardNumber: data.cardNumber.replace(/\s/g, ''), // Remove spaces
-            expiryDate: data.expiryDate,
-            cvv: data.cvv,
-            cardholderName: data.cardholderName
-          }
-        });
-      }
+      // Paytm payment is handled by the PaytmPaymentForm component
+      // This should not be reached as the form submission is handled separately
+      throw new Error('Paytm payment should be handled by the PaytmPaymentForm component');
     },
     onSuccess: (result) => {
-      // Only show success for card payments, Paytm redirects
-      if (result && !result.redirected) {
-        // Clear stored project data
-        localStorage.removeItem('pending_payment_project');
-        
-        toast.success('Payment processed successfully!');
-
-        // Navigate to success page first, then to project
-        navigate(`/app/payment/success?order_id=${result.payment?.transaction_id || 'card_payment'}&status=success`, {
-          replace: true
-        });
-      }
+      // This should not be reached as Paytm payment is handled separately
+      console.log('Payment success callback triggered:', result);
     },
     onError: (error: any) => {
       toast.error(error.message || 'Payment failed. Please try again.');
@@ -161,42 +130,26 @@ const PaymentPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation based on payment method
-    if (paymentMethod === 'card') {
-      if (!paymentData.cardNumber || !paymentData.expiryDate || !paymentData.cvv || !paymentData.cardholderName) {
-        toast.error('Please fill in all payment details');
-        return;
-      }
-    }
-
+    // Validation for address
     if (!paymentData.address.street || !paymentData.address.city || !paymentData.address.zipCode) {
       toast.error('Please fill in all address details');
       return;
     }
 
     setIsProcessing(true);
-    
+
     // Store project data for success/failure pages
     localStorage.setItem('pending_payment_project', JSON.stringify(projectData));
-    
+
     processPaymentMutation.mutate(paymentData);
   };
 
-  const getModelPrice = (modelType: string, method: PaymentMethod = 'card') => {
-    if (method === 'paytm') {
-      switch (modelType) {
-        case 'basic': return '₹999';
-        case 'medium': return '₹1999';
-        case 'advanced': return '₹3999';
-        default: return '₹999';
-      }
-    } else {
-      switch (modelType) {
-        case 'basic': return '₹999';
-        case 'medium': return '₹1999';
-        case 'advanced': return '₹3999';
-        default: return '₹999';
-      }
+  const getModelPrice = (modelType: string) => {
+    switch (modelType) {
+      case 'basic': return '₹999';
+      case 'medium': return '₹1999';
+      case 'advanced': return '₹3999';
+      default: return '₹999';
     }
   };
 
@@ -269,56 +222,12 @@ const PaymentPage: React.FC = () => {
             </div>
             <div>
               <span className="font-medium text-gray-600 dark:text-gray-400">Price:</span>
-              <span className="ml-2 text-2xl font-bold text-green-600">{getModelPrice(projectData.model_type, paymentMethod)}</span>
+              <span className="ml-2 text-2xl font-bold text-green-600">{getModelPrice(projectData.model_type)}</span>
             </div>
           </div>
         </div>
 
-        {/* Payment Method Selection */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            Select Payment Method
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              type="button"
-              onClick={() => setPaymentMethod('card')}
-              className={cn(
-                'p-4 border rounded-lg text-left transition-all',
-                paymentMethod === 'card'
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
-              )}
-            >
-              <div className="flex items-center">
-                <CreditCard className="h-6 w-6 text-gray-600 dark:text-gray-400 mr-3" />
-                <div>
-                  <div className="font-medium text-gray-900 dark:text-white">Credit/Debit Card</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Visa, Mastercard, Amex</div>
-                </div>
-              </div>
-            </button>
 
-            <button
-              type="button"
-              onClick={() => setPaymentMethod('paytm')}
-              className={cn(
-                'p-4 border rounded-lg text-left transition-all',
-                paymentMethod === 'paytm'
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
-              )}
-            >
-              <div className="flex items-center">
-                <Smartphone className="h-6 w-6 text-gray-600 dark:text-gray-400 mr-3" />
-                <div>
-                  <div className="font-medium text-gray-900 dark:text-white">Paytm</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">UPI, Wallet, Cards</div>
-                </div>
-              </div>
-            </button>
-          </div>
-        </div>
 
         {/* Payment Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -404,80 +313,7 @@ const PaymentPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Payment Card Section - Only show for card payment */}
-          {paymentMethod === 'card' && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex items-center mb-4">
-                <CreditCard className="h-5 w-5 text-gray-600 dark:text-gray-400 mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Payment Information
-                </h2>
-              </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Cardholder Name
-                  </label>
-                  <input
-                    type="text"
-                    value={paymentData.cardholderName}
-                    onChange={(e) => handleInputChange('cardholderName', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="John Doe"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Card Number
-                  </label>
-                  <input
-                    type="text"
-                    value={paymentData.cardNumber}
-                    onChange={(e) => handleInputChange('cardNumber', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="1234 5678 9012 3456"
-                    maxLength={19}
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Expiry Date
-                    </label>
-                    <input
-                      type="text"
-                      value={paymentData.expiryDate}
-                      onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      placeholder="MM/YY"
-                      maxLength={5}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      CVV
-                    </label>
-                    <input
-                      type="text"
-                      value={paymentData.cvv}
-                      onChange={(e) => handleInputChange('cvv', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      placeholder="123"
-                      maxLength={4}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Paytm Payment Component */}
           {paymentMethod === 'paytm' && (
@@ -506,33 +342,7 @@ const PaymentPage: React.FC = () => {
             />
           )}
 
-          {/* Submit Button - Only show for card payments */}
-          {paymentMethod === 'card' && (
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={isProcessing || processPaymentMutation.isPending}
-                className={cn(
-                  'px-8 py-3 rounded-lg text-sm font-medium text-white transition-all duration-200 transform flex items-center',
-                  isProcessing || processPaymentMutation.isPending
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-[#e1802b] hover:bg-[#d16f1a] hover:scale-105 shadow-lg'
-                )}
-              >
-                {isProcessing || processPaymentMutation.isPending ? (
-                  <>
-                    <LoadingSpinner size="sm" />
-                    <span className="ml-2">Processing Payment...</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-4 w-4 mr-2" />
-                    Pay with Card - {getModelPrice(projectData.model_type, 'card')}
-                  </>
-                )}
-              </button>
-            </div>
-          )}
+
         </form>
       </div>
 
@@ -585,11 +395,11 @@ const PaymentPage: React.FC = () => {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-green-800 dark:text-green-300">{projectData.name}</span>
-                <span className="text-green-800 dark:text-green-300">{getModelPrice(projectData.model_type, paymentMethod)}</span>
+                <span className="text-green-800 dark:text-green-300">{getModelPrice(projectData.model_type)}</span>
               </div>
               <div className="flex justify-between font-medium">
                 <span className="text-green-900 dark:text-white">Total</span>
-                <span className="text-green-900 dark:text-white">{getModelPrice(projectData.model_type, paymentMethod)}</span>
+                <span className="text-green-900 dark:text-white">{getModelPrice(projectData.model_type)}</span>
               </div>
             </div>
           </div>

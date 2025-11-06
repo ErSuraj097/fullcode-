@@ -1,0 +1,108 @@
+{
+    "intents": [
+        {
+            "tag": "greeting",
+            "patterns": [
+                "hello",
+                "hi",
+                "namaste",
+                "namaskar"
+            ],
+            "responses": [
+                "Namaste!",
+                "Hi there!",
+                "Hello! How can I help you learn Sanskrit today?"
+            ]
+        },
+        {
+            "tag": "thanks",
+            "patterns": [
+                "thank you",
+                "thanks",
+                "dhanyavaad"
+            ],
+            "responses": [
+                "You're welcome!",
+                "Swāgatam!",
+                "Happy to help."
+            ]
+        },
+        {
+            "tag": "ask_sanskrit_word",
+            "patterns": [
+                "what is the Sanskrit word for love",
+                "how do you say knowledge in Sanskrit",
+                "sanskrit word for peace"
+            ],
+            "responses": [
+                "The Sanskrit word for love is 'Prema'.",
+                "‘Jñānam’ means knowledge in Sanskrit.",
+                "The word for peace is 'Shāntiḥ'."
+            ]
+        },
+        {
+            "tag": "ask_translation",
+            "patterns": [
+                "translate I am happy",
+                "how to say good morning in Sanskrit",
+                "how do you say where are you going"
+            ],
+            "responses": [
+                "'Aham tuṣṭo'smi' means 'I am happy'.",
+                "'Suprabhātam' is 'Good Morning' in Sanskrit.",
+                "'Tvam kutra gacchasi?' means 'Where are you going?'"
+            ]
+        },
+        {
+            "tag": "learn_alphabets",
+            "patterns": [
+                "teach me Sanskrit alphabets",
+                "what are the vowels in Sanskrit",
+                "sanskrit consonants"
+            ],
+            "responses": [
+                "Sanskrit vowels are: अ, आ, इ, ई, उ, ऊ, ऋ, ॠ, ए, ऐ, ओ, औ",
+                "Let's start with the swaras (vowels): अ, आ, इ, ई...",
+                "Consonants (Vyanjanas) include: क, ख, ग, घ, ङ..."
+            ]
+        },
+        {
+            "tag": "grammar_help",
+            "patterns": [
+                "what is vibhakti",
+                "explain sandhi",
+                "what is a samasa"
+            ],
+            "responses": [
+                "Vibhakti refers to grammatical case endings in Sanskrit.",
+                "Sandhi is the joining of letters or words.",
+                "Samāsa means compound word formation."
+            ]
+        },
+        {
+            "tag": "speak_shloka",
+            "patterns": [
+                "recite a shloka",
+                "say a verse from Gita",
+                "Bhagavad Gita shloka"
+            ],
+            "responses": [
+                "धर्मक्षेत्रे कुरुक्षेत्रे समवेता युयुत्सवः...",
+                "Here is a famous Gita verse: कर्मण्येवाधिकारस्ते मा फलेषु कदाचन..."
+            ]
+        },
+        {
+            "tag": "goodbye",
+            "patterns": [
+                "bye",
+                "goodbye",
+                "see you",
+                "farewell"
+            ],
+            "responses": [
+                "Goodbye! Or in Sanskrit — 'Punardarshanāya'!",
+                "See you again! Happy Sanskrit learning."
+            ]
+        }
+    ]
+}

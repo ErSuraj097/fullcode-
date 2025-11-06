@@ -311,7 +311,7 @@ const ProjectsPage: React.FC = () => {
                            project.description?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || project.training_status === statusFilter;
       const matchesType = typeFilter === 'all' || project.type === typeFilter;
-      const matchesPayment = project.payment_status === 'paid'; // Only show paid projects
+      const matchesPayment = project.payment_status === 'success'; // Only show paid projects
 
       return matchesSearch && matchesStatus && matchesType && matchesPayment;
     });
